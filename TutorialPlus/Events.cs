@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PlayerRoles;
 using PluginAPI.Core;
+using PlayerRoles.FirstPersonControl;
 
 namespace TutorialPlus
 {
@@ -37,18 +38,6 @@ namespace TutorialPlus
 			else return true;
 		}
 
-		[PluginEvent(ServerEventType.PlayerDamage)]
-		public bool PlayerDamaged(PlayerDamageEvent args)
-		{
-			if (Plugin.Config.TutorialGodmode && args.Target.Role == RoleTypeId.Tutorial && !args.Target.TemporaryData.Contains("tfix_disablegodmode"))
-			{
-				if (Plugin.Config.Debug)
-					Log.Debug($"Plugin blocked player {args.Target.Nickname} from taking damage from {args.Player.Nickname}");
-				return false;
-			}
-			else return true;
-		}
-
 		[PluginEvent(ServerEventType.PlayerChangeRole)]
 		public void PlayerChangeRole(PlayerChangeRoleEvent args)
 		{
@@ -67,6 +56,13 @@ namespace TutorialPlus
 						Log.Debug($"Plugin enabled godmode for {args.Player.Nickname}");
 					args.Player.ReferenceHub.characterClassManager.GodMode = true;
 				}
+
+				if (Plugin.Config.TutorialNoclip)
+				{
+					if (Plugin.Config.Debug)
+						Log.Debug($"Plugin enabled noclip for {args.Player.Nickname}");
+					FpcNoclip.PermitPlayer(args.Player.ReferenceHub);
+				}
 			}
 			else if(args.OldRole.RoleTypeId == RoleTypeId.Tutorial)
 			{
@@ -83,7 +79,26 @@ namespace TutorialPlus
 						Log.Debug($"Plugin disabled godmode for {args.Player.Nickname}");
 					args.Player.ReferenceHub.characterClassManager.GodMode = false;
 				}
+
+				if (Plugin.Config.TutorialNoclip)
+				{
+					if (Plugin.Config.Debug)
+						Log.Debug($"Plugin disabled noclip for {args.Player.Nickname}");
+					FpcNoclip.UnpermitPlayer(args.Player.ReferenceHub);
+				}
 			}
+		}
+
+		[PluginEvent(ServerEventType.PlayerHandcuff)]
+		public bool PlayerHandcuffed(PlayerHandcuffEvent args)
+		{
+			if (!Plugin.Config.CuffableTutorial && args.Target.Role == RoleTypeId.Tutorial)
+			{
+				if (Plugin.Config.Debug)
+					Log.Debug($"Plugin blocked player {args.Target.Nickname} from being disarmed by {args.Player.Nickname}");
+				return false;
+			}
+			else return true;
 		}
 	}
 }
